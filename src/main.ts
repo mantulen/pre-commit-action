@@ -1,26 +1,180 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
+import * as exec from '@actions/exec'
+import * as github from '@actions/github'
+import type { OctokitOptions } from '@octokit/core/dist-types/types'
+
+interface ResultDataType {
+    [hookId: string]: {
+        duration: string
+        icon: string
+        result: string
+        exitCode: string
+        error: string
+    }
+}
+
+interface ErrorDataType {
+    [hookId: string]: string
+}
 
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
+    const pythonPath = core.getInput('python-path') || 'python'
+    const preCommitPath = core.getInput('pre-commit-path') || 'pre-commit'
+
+    let pythonVersion = ''
+    let preCommitVersion = ''
+
+    // Check if Python is installed and get the version
+    core.debug(`Checking python path: ${pythonPath}`)
     try {
-        const ms: string = core.getInput('milliseconds')
-
-        // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-        core.debug(`Waiting ${ms} milliseconds ...`)
-
-        // Log the current timestamp, wait, then log the new timestamp
-        core.debug(new Date().toTimeString())
-        await wait(parseInt(ms, 10))
-        core.debug(new Date().toTimeString())
-
-        // Set outputs for other workflow steps to use
-        core.setOutput('time', new Date().toTimeString())
-    } catch (error) {
-        // Fail the workflow run if an error occurs
-        if (error instanceof Error) core.setFailed(error.message)
+        await exec.exec(pythonPath, ['--version'], {
+            failOnStdErr: false,
+            ignoreReturnCode: true,
+            listeners: {
+                stdout: (data: Buffer) => {
+                    pythonVersion = data.toString()
+                }
+            }
+        })
+    } catch (err) {
+        console.debug(err)
     }
+
+    // If Python is not installed, the action will fail
+    if (!pythonVersion) {
+        core.error('Python was not found.')
+        core.setOutput('result', '{}')
+        core.setFailed('Python is required to run this action.')
+        return
+    }
+    core.info(`Python version: ${pythonVersion}`)
+
+    // Check if pre-commit is installed and get the version
+    core.debug(`Checking pre-commit path: ${preCommitPath}`)
+    try {
+        await exec.exec(preCommitPath, ['--version'], {
+            listeners: {
+                stdout: (data: Buffer) => {
+                    preCommitVersion = data.toString()
+                }
+            }
+        })
+    } catch (err) {
+        console.debug(err)
+    }
+
+    // If pre-commit is not installed, install it
+    if (!preCommitVersion) {
+        core.info('Installing pre-commit...')
+        await exec.exec(pythonPath, ['-m', 'pip', 'install', 'pre-commit'])
+    } else {
+        core.info(`pre-commit version: ${preCommitVersion}`)
+    }
+
+    const baseUrl = core.getInput('base-url', { required: true })
+    const token = core.getInput('github-token', { required: true })
+    const issueNumber = parseInt(core.getInput('issue-number', { required: true }))
+    const debug = core.getBooleanInput('debug')
+
+    const context = github.context
+    const options: OctokitOptions = {
+        baseUrl,
+        log: debug ? console : undefined
+    }
+
+    const octokit = github.getOctokit(token, options)
+
+    const resultData: ResultDataType = {}
+    const errorData: ErrorDataType = {}
+
+    let lastHookId: string
+    let lastResult: string
+
+    core.info('Running pre-commit...')
+
+    // preCommitArgs input is for jest testing only, at this time
+    const preCommitArgsInput = core.getInput('pre-commit-args') || ''
+    const preCommitArgs = preCommitArgsInput
+        ? preCommitArgsInput.split(' ')
+        : ['run', '--color', 'never', '--all-files', '--verbose']
+
+    const returnCode = await exec.exec('pre-commit', preCommitArgs, {
+        failOnStdErr: false,
+        ignoreReturnCode: true,
+        listeners: {
+            stdline: data => {
+                const line = data.toString()
+                const result = line.match(/(?<result>Passed|Failed|Skipped)$/)?.groups?.result
+                const hookId = line.match(/(- hook id: )(?<hookid>.+)/)?.groups?.hookid
+                const duration = line.match(/(- duration: )(?<duration>.+)/)?.groups?.duration
+                const exitCode = line.match(/(- exit code: )(?<exitcode>.+)/)?.groups?.exitcode
+                const skipLine = line.match(/\d+ (files left unchanged)/)?.length
+
+                if (result) {
+                    lastResult = result
+                } else if (hookId) {
+                    resultData[hookId] = {
+                        duration: '',
+                        icon: lastResult === 'Passed' ? '✅' : lastResult === 'Failed' ? '❌' : '⚠️',
+                        result: lastResult,
+                        exitCode: '0',
+                        error: ''
+                    }
+                    lastHookId = hookId
+                } else if (duration) {
+                    resultData[lastHookId].duration = duration
+                } else if (exitCode) {
+                    resultData[lastHookId].exitCode = exitCode
+                } else if (line && !skipLine && resultData[lastHookId].exitCode) {
+                    resultData[lastHookId].error += `${line}\n`
+                }
+            }
+        }
+    })
+
+    let commentBody = '## pre-commit results\n\n| Hook ID | Duration | Result |'
+
+    if (returnCode === 0) {
+        core.info('all pre-commit hooks have passed!')
+        commentBody += '\n| :--- | :---: | --- |\n'
+    } else {
+        core.error('pre-commit checks have failed hooks.')
+        core.setFailed('pre-commit checks have failed.')
+        commentBody += ' Exit code |\n| :--- | :---: | --- | :---: |\n'
+    }
+
+    for (const [key, value] of Object.entries(resultData)) {
+        commentBody += `| ${key} | ${value.duration} | ${value.icon} ${value.result} |`
+        commentBody += returnCode === 0 ? '\n' : ` ${value.exitCode} |\n`
+        if (value.error) {
+            errorData[key] = value.error
+        }
+    }
+
+    if (Object.keys(errorData).length) {
+        commentBody += '\n### Failures\n'
+        for (const [key, value] of Object.entries(errorData)) {
+            commentBody += `\n<details>\n<summary>${key}</summary>\n\n\`\`\`\n${value}\`\`\`\n</details>\n`
+        }
+    }
+
+    core.setOutput(
+        'result',
+        JSON.stringify({
+            returnCode,
+            resultData,
+            errorData
+        })
+    )
+
+    await octokit.rest.issues.createComment({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: issueNumber,
+        body: commentBody
+    })
 }
