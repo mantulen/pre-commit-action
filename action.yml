@@ -1,23 +1,49 @@
-name: 'pre-commit-action'
-description: 'Provide a description here'
-author: 'mantulen'
+name: pre-commit-action
+description: Pre-commit action
+author: mantulen
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-    icon: 'heart'
-    color: 'red'
+    icon: check-circle
+    color: green
 
-# Define your inputs here.
 inputs:
-    milliseconds:
-        description: 'Your input description here'
-        required: true
-        default: '1000'
+    base-url:
+        required: false
+        default: https://api.github.com
+        description:
+            An optional GitHub REST API URL to connect to a different GitHub instance. For example,
+            https://my.github-enterprise-server.com/api/v3
 
-# Define your outputs here.
+    github-token:
+        required: false
+        default: ${{ github.token }}
+        description: The GitHub token used to create an authenticated client.
+
+    issue-number:
+        required: false
+        default: ${{ github.event.number }}
+        description:
+            ID of the issue or pull request to comment on. Default is the number of the pull request that triggered the
+            action.
+
+    debug:
+        required: false
+        default: ${{ runner.debug == '1' }}
+        description:
+            Whether to tell the GitHub client to log details of its requests. true or false. Default is to run in debug
+            mode when the GitHub Actions step debug logging is turned on.
+
+    python-path:
+        required: false
+        description: Custom path to Python executable
+
+    pre-commit-path:
+        required: false
+        description: Custom path to pre-commit executable
+
 outputs:
-    time:
-        description: 'Your output description here'
+    result:
+        description: Pre-commit result in JSON format.
 
 runs:
     using: node20
