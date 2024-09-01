@@ -81,8 +81,7 @@ action is invoked. You can replace the contents of this directory with your own 
 
 There are a few things to keep in mind when writing your action code:
 
--   Most GitHub Actions toolkit and CI/CD operations are processed asynchronously. In `main.ts`, you will see that the
-    action is run in an `async` function.
+- Most GitHub Actions toolkit and CI/CD operations are processed asynchronously. In `main.ts`, you will see that the action is run in an `async` function.
 
     ```javascript
     import * as core from '@actions/core'
