@@ -43,7 +43,7 @@ rules:
         'i18n-text/no-en': 'off',
         'import/no-namespace': 'off',
         'no-console': 'off',
-        'no-unused-vars': 'off',
+        'no-unused-vars': 'warn',
         'prettier/prettier': 'error',
         'semi': 'off',
         '@typescript-eslint/array-type': 'error',
