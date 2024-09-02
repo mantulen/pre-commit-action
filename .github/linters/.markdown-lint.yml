@@ -5,6 +5,7 @@ MD004:
 # Line length
 MD013:
     line_length: 120
+    tables: false
 
 # Ordered list item prefix
 MD029:

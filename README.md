@@ -39,7 +39,7 @@ All inputs are optional.
 | -------- | ------------------------------------------------------------------------------- |
 | `result` | Pre-commit result in JSON format, if you need to use the output in a later step |
 
-## Example workflow yaml
+## Example workflow YAML
 
 Place in `/.github/workflows/pre-commit-check.yml`
 
