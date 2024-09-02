@@ -207,10 +207,17 @@ export async function run(): Promise<void> {
         })
     )
 
-    await octokit.rest.issues.createComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        issue_number: issueNumber,
-        body: commentBody
-    })
+    if (!issueNumber) {
+        /* istanbul ignore next */
+        core.warning(
+            'No PR/issue number found, will not be creating a comment. You can pass the PR/issue number using the `issue-number` input.'
+        )
+    } else {
+        await octokit.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issueNumber,
+            body: commentBody
+        })
+    }
 }
