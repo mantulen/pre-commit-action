@@ -89,7 +89,7 @@ export async function run(): Promise<void> {
 
     const debug = core.getBooleanInput('debug') || core.isDebug()
 
-    const skipComment = core.getBooleanInput('skip-comment') || false
+    const skipComment = core.getBooleanInput('skip-comment') || process.env.INPUT_SKIP_COMMENT || false
     const skipJobSummary = core.getBooleanInput('skip-job-summary') || false
 
     const options: OctokitOptions = {
