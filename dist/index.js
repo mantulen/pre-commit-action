@@ -30482,7 +30482,6 @@ async function run() {
         await exec.exec(pythonPath, ['--version'], {
             failOnStdErr: false,
             ignoreReturnCode: true,
-            errStream: process.stdout,
             listeners: {
                 stdout: (data) => {
                     pythonVersion = data.toString();
@@ -30491,7 +30490,7 @@ async function run() {
         });
     }
     catch (err) {
-        console.debug(`Python not found: ${pythonPath}`);
+        console.error(err);
     }
     // If Python is not installed, the action will fail
     if (!pythonVersion) {
@@ -30508,7 +30507,6 @@ async function run() {
         await exec.exec(preCommitPath, ['--version'], {
             failOnStdErr: false,
             ignoreReturnCode: true,
-            errStream: process.stdout,
             listeners: {
                 stdout: (data) => {
                     preCommitVersion = data.toString();
@@ -30553,7 +30551,6 @@ async function run() {
         returnCode = await exec.exec('pre-commit', preCommitArgs, {
             failOnStdErr: false,
             ignoreReturnCode: true,
-            errStream: process.stdout,
             listeners: {
                 stdline: data => {
                     const line = data.toString();
@@ -30598,7 +30595,7 @@ async function run() {
     }
     catch (err) {
         /* istanbul ignore next */
-        console.debug(err);
+        console.error(err);
     }
     let commentBody = '## pre-commit results\n\n| Hook ID | Duration | Result |';
     if (returnCode === 0) {
