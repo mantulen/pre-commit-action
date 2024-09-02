@@ -64,6 +64,39 @@ describe('action', () => {
         expect(setOutputMock).toHaveBeenNthCalledWith(1, 'result', '{}')
     }, 30000)
 
+    it('verify successful run, pre-commit missing', async () => {
+        getInputMock.mockImplementation(param => {
+            switch (param) {
+                case 'pre-commit-path':
+                    return '/fake/path/to/pre-commit'
+                default:
+                    return ''
+            }
+        })
+        await main.run()
+        expect(runMock).toHaveReturned()
+
+        expect(debugMock).toHaveBeenNthCalledWith(
+            1,
+            'Checking python path: python'
+        )
+        expect(infoMock).toHaveBeenNthCalledWith(
+            1,
+            expect.stringMatching(/Python \d+\.\d+\.\d+/)
+        )
+        expect(debugMock).toHaveBeenNthCalledWith(
+            2,
+            'Checking pre-commit path: /fake/path/to/pre-commit'
+        )
+        expect(infoMock).toHaveBeenNthCalledWith(2, 'Installing pre-commit...')
+        expect(infoMock).toHaveBeenNthCalledWith(3, 'Running pre-commit...')
+        expect(infoMock).toHaveBeenNthCalledWith(
+            4,
+            'all pre-commit hooks have passed!'
+        )
+        expect(errorMock).not.toHaveBeenCalled()
+    }, 30000)
+
     it('verify failed run, pre-commit errors', async () => {
         const testFile = `__tests__/test-${Math.random()}.py`
         getInputMock.mockImplementation(param => {
@@ -99,39 +132,6 @@ describe('action', () => {
             expect.stringMatching(/pre-commit \d+\.\d+\.\d+/)
         )
         expect(infoMock).toHaveBeenNthCalledWith(3, 'Running pre-commit...')
-    }, 30000)
-
-    it('verify successful run, pre-commit missing', async () => {
-        getInputMock.mockImplementation(param => {
-            switch (param) {
-                case 'pre-commit-path':
-                    return '/fake/path/to/pre-commit'
-                default:
-                    return ''
-            }
-        })
-        await main.run()
-        expect(runMock).toHaveReturned()
-
-        expect(debugMock).toHaveBeenNthCalledWith(
-            1,
-            'Checking python path: python'
-        )
-        expect(infoMock).toHaveBeenNthCalledWith(
-            1,
-            expect.stringMatching(/Python \d+\.\d+\.\d+/)
-        )
-        expect(debugMock).toHaveBeenNthCalledWith(
-            2,
-            'Checking pre-commit path: /fake/path/to/pre-commit'
-        )
-        expect(infoMock).toHaveBeenNthCalledWith(2, 'Installing pre-commit...')
-        expect(infoMock).toHaveBeenNthCalledWith(3, 'Running pre-commit...')
-        expect(infoMock).toHaveBeenNthCalledWith(
-            4,
-            'all pre-commit hooks have passed!'
-        )
-        expect(errorMock).not.toHaveBeenCalled()
     }, 30000)
 
     it('verify successful run, no pre-commit errors', async () => {
