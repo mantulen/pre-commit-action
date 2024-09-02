@@ -25,6 +25,7 @@ let setFailedMock: jest.SpiedFunction<typeof core.setFailed>
 describe('action', () => {
     beforeEach(() => {
         jest.clearAllMocks()
+        jest.resetModules()
 
         infoMock = jest.spyOn(core, 'info').mockImplementation()
         debugMock = jest.spyOn(core, 'debug').mockImplementation()
