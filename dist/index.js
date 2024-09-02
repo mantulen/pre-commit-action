@@ -30530,6 +30530,8 @@ async function run() {
     const token = core.getInput('github-token') || process.env.GITHUB_TOKEN || '';
     const issueNumber = parseInt(core.getInput('issue-number')) || context.payload?.pull_request?.number;
     const debug = core.getBooleanInput('debug') || core.isDebug();
+    const skipComment = core.getBooleanInput('skip-comment') || false;
+    const skipJobSummary = core.getBooleanInput('skip-job-summary') || false;
     const options = {
         baseUrl,
         log: debug ? console : undefined
@@ -30564,11 +30566,7 @@ async function run() {
                     else if (hookId) {
                         resultData[hookId] = {
                             duration: '',
-                            icon: lastResult === 'Passed'
-                                ? '✅'
-                                : lastResult === 'Failed'
-                                    ? '❌'
-                                    : '⚠️',
+                            icon: lastResult === 'Passed' ? '✅' : lastResult === 'Failed' ? '❌' : '⚠️',
                             result: lastResult,
                             exitCode: '0',
                             error: ''
@@ -30581,9 +30579,7 @@ async function run() {
                     else if (exitCode) {
                         resultData[lastHookId].exitCode = exitCode;
                     }
-                    else if (line &&
-                        !skipLine &&
-                        resultData[lastHookId].exitCode) {
+                    else if (line && !skipLine && resultData[lastHookId].exitCode) {
                         resultData[lastHookId].error += `${line}\n`;
                     }
                 }
@@ -30623,18 +30619,20 @@ async function run() {
         resultData,
         detailsData
     }));
+    /* istanbul ignore next */
     if (!issueNumber) {
-        /* istanbul ignore next */
         core.warning('No PR/issue number found, will not be creating a comment. You can pass the PR/issue number using the `issue-number` input.');
     }
-    else {
-        /* istanbul ignore next */
+    else if (!skipComment) {
         await octokit.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issueNumber,
             body: commentBody
         });
+    }
+    if (!skipJobSummary) {
+        core.summary.addRaw(commentBody);
     }
 }
 
