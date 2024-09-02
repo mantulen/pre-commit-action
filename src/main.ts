@@ -75,10 +75,10 @@ export async function run(): Promise<void> {
         core.info(`pre-commit version: ${preCommitVersion}`)
     }
 
-    const baseUrl = core.getInput('base-url', { required: true })
-    const token = core.getInput('github-token', { required: true })
-    const issueNumber = parseInt(core.getInput('issue-number', { required: true }))
-    const debug = core.getBooleanInput('debug')
+    const baseUrl = core.getInput('base-url') || 'https://api.github.com'
+    const token = core.getInput('github-token') || process.env.GITHUB_TOKEN || github.context. || ''
+    const issueNumber = parseInt(core.getInput('issue-number')) || github.context.issue.number || 1
+    const debug = core.getBooleanInput('debug') || core.isDebug()
 
     const context = github.context
     const options: OctokitOptions = {

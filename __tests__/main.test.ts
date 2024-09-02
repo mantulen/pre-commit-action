@@ -10,11 +10,6 @@ import * as main from '../src/main'
 import * as core from '@actions/core'
 import fs from 'fs'
 
-// Set the issue number to the issue you want to test with
-const issueNumber = process.env.INPUT_ISSUE_NUMBER || '1'
-
-const githubToken = process.env.GITHUB_TOKEN || ''
-
 // Mock the action's main function
 const runMock = jest.spyOn(main, 'run')
 
@@ -70,12 +65,6 @@ describe('action', () => {
     it('verify failed run, pre-commit errors', async () => {
         getInputMock.mockImplementation(param => {
             switch (param) {
-                case 'base-url':
-                    return 'https://api.github.com'
-                case 'issue-number':
-                    return issueNumber
-                case 'github-token':
-                    return githubToken
                 case 'pre-commit-args':
                     return 'run --config __tests__/.pre-commit-config-test.yaml --files __tests__/test.py --verbose'
                 default:
@@ -108,12 +97,6 @@ describe('action', () => {
             switch (param) {
                 case 'pre-commit-path':
                     return '/fake/path/to/pre-commit'
-                case 'base-url':
-                    return 'https://api.github.com'
-                case 'issue-number':
-                    return issueNumber
-                case 'github-token':
-                    return githubToken
                 default:
                     return ''
             }
@@ -131,19 +114,6 @@ describe('action', () => {
     })
 
     it('verify successful run, no pre-commit errors', async () => {
-        getInputMock.mockImplementation(param => {
-            switch (param) {
-                case 'base-url':
-                    return 'https://api.github.com'
-                case 'issue-number':
-                    return issueNumber
-                case 'github-token':
-                    return githubToken
-                default:
-                    return ''
-            }
-        })
-
         await main.run()
         expect(runMock).toHaveReturned()
 
