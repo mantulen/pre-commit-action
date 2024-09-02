@@ -36,6 +36,7 @@ export async function run(): Promise<void> {
         await exec.exec(pythonPath, ['--version'], {
             failOnStdErr: false,
             ignoreReturnCode: true,
+            errStream: process.stdout,
             listeners: {
                 stdout: (data: Buffer) => {
                     pythonVersion = data.toString()
@@ -60,6 +61,9 @@ export async function run(): Promise<void> {
     core.debug(`Checking pre-commit path: ${preCommitPath}`)
     try {
         await exec.exec(preCommitPath, ['--version'], {
+            failOnStdErr: false,
+            ignoreReturnCode: true,
+            errStream: process.stdout,
             listeners: {
                 stdout: (data: Buffer) => {
                     preCommitVersion = data.toString()
@@ -114,6 +118,7 @@ export async function run(): Promise<void> {
         returnCode = await exec.exec('pre-commit', preCommitArgs, {
             failOnStdErr: false,
             ignoreReturnCode: true,
+            errStream: process.stdout,
             listeners: {
                 stdline: data => {
                     const line = data.toString()
