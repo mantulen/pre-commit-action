@@ -13,7 +13,7 @@ interface ResultDataType {
     }
 }
 
-interface ErrorDataType {
+interface DetailsDataType {
     [hookId: string]: string
 }
 
@@ -36,7 +36,6 @@ export async function run(): Promise<void> {
         await exec.exec(pythonPath, ['--version'], {
             failOnStdErr: false,
             ignoreReturnCode: true,
-            errStream: process.stdout,
             listeners: {
                 stdout: (data: Buffer) => {
                     pythonVersion = data.toString()
@@ -44,7 +43,7 @@ export async function run(): Promise<void> {
             }
         })
     } catch (err) {
-        console.debug(`Python not found: ${pythonPath}`)
+        console.error(err)
     }
 
     // If Python is not installed, the action will fail
@@ -63,7 +62,6 @@ export async function run(): Promise<void> {
         await exec.exec(preCommitPath, ['--version'], {
             failOnStdErr: false,
             ignoreReturnCode: true,
-            errStream: process.stdout,
             listeners: {
                 stdout: (data: Buffer) => {
                     preCommitVersion = data.toString()
@@ -102,7 +100,7 @@ export async function run(): Promise<void> {
     const octokit = github.getOctokit(token, options)
 
     const resultData: ResultDataType = {}
-    const errorData: ErrorDataType = {}
+    const detailsData: DetailsDataType = {}
 
     let lastHookId: string
     let lastResult: string
@@ -120,7 +118,6 @@ export async function run(): Promise<void> {
         returnCode = await exec.exec('pre-commit', preCommitArgs, {
             failOnStdErr: false,
             ignoreReturnCode: true,
-            errStream: process.stdout,
             listeners: {
                 stdline: data => {
                     const line = data.toString()
@@ -170,7 +167,7 @@ export async function run(): Promise<void> {
         })
     } catch (err) {
         /* istanbul ignore next */
-        console.debug(err)
+        console.error(err)
     }
 
     let commentBody = '## pre-commit results\n\n| Hook ID | Duration | Result |'
@@ -189,13 +186,13 @@ export async function run(): Promise<void> {
         commentBody += `| ${key} | ${value.duration} | ${value.icon} ${value.result} |`
         commentBody += returnCode === 0 ? '\n' : ` ${value.exitCode} |\n`
         if (value.error) {
-            errorData[key] = value.error
+            detailsData[key] = value.error
         }
     }
 
-    if (Object.keys(errorData).length) {
-        commentBody += '\n### Failures\n'
-        for (const [key, value] of Object.entries(errorData)) {
+    if (Object.keys(detailsData).length) {
+        commentBody += '\n### Details\n'
+        for (const [key, value] of Object.entries(detailsData)) {
             commentBody += `\n<details>\n<summary>${key}</summary>\n\n\`\`\`\n${value}\`\`\`\n</details>\n`
         }
     }
@@ -205,7 +202,7 @@ export async function run(): Promise<void> {
         JSON.stringify({
             returnCode,
             resultData,
-            errorData
+            detailsData
         })
     )
 
