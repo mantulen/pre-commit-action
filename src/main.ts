@@ -203,6 +203,6 @@ export async function run(): Promise<void> {
     }
 
     if (!skipJobSummary) {
-        core.summary.addRaw(commentBody)
+        core.summary.addRaw(commentBody, true)
     }
 }
