@@ -13,7 +13,7 @@ interface ResultDataType {
     }
 }
 
-interface ErrorDataType {
+interface DetailsDataType {
     [hookId: string]: string
 }
 
@@ -32,20 +32,15 @@ export async function run(): Promise<void> {
 
     // Check if Python is installed and get the version
     core.debug(`Checking python path: ${pythonPath}`)
-    try {
-        await exec.exec(pythonPath, ['--version'], {
-            failOnStdErr: false,
-            ignoreReturnCode: true,
-            errStream: process.stdout,
-            listeners: {
-                stdout: (data: Buffer) => {
-                    pythonVersion = data.toString()
-                }
+    await exec.exec(pythonPath, ['--version'], {
+        failOnStdErr: false,
+        ignoreReturnCode: true,
+        listeners: {
+            stdout: (data: Buffer) => {
+                pythonVersion = data.toString()
             }
-        })
-    } catch (err) {
-        console.debug(`Python not found: ${pythonPath}`)
-    }
+        }
+    })
 
     // If Python is not installed, the action will fail
     if (!pythonVersion) {
@@ -59,20 +54,15 @@ export async function run(): Promise<void> {
 
     // Check if pre-commit is installed and get the version
     core.debug(`Checking pre-commit path: ${preCommitPath}`)
-    try {
-        await exec.exec(preCommitPath, ['--version'], {
-            failOnStdErr: false,
-            ignoreReturnCode: true,
-            errStream: process.stdout,
-            listeners: {
-                stdout: (data: Buffer) => {
-                    preCommitVersion = data.toString()
-                }
+    await exec.exec(preCommitPath, ['--version'], {
+        failOnStdErr: false,
+        ignoreReturnCode: true,
+        listeners: {
+            stdout: (data: Buffer) => {
+                preCommitVersion = data.toString()
             }
-        })
-    } catch (err) {
-        console.debug(`pre-commit not found: ${preCommitPath}`)
-    }
+        }
+    })
 
     // If pre-commit is not installed, install it
     if (!preCommitVersion) {
@@ -102,7 +92,7 @@ export async function run(): Promise<void> {
     const octokit = github.getOctokit(token, options)
 
     const resultData: ResultDataType = {}
-    const errorData: ErrorDataType = {}
+    const detailsData: DetailsDataType = {}
 
     let lastHookId: string
     let lastResult: string
@@ -116,62 +106,54 @@ export async function run(): Promise<void> {
         ? preCommitArgsInput.split(' ')
         : ['run', '--color', 'never', '--all-files', '--verbose']
 
-    try {
-        returnCode = await exec.exec('pre-commit', preCommitArgs, {
-            failOnStdErr: false,
-            ignoreReturnCode: true,
-            errStream: process.stdout,
-            listeners: {
-                stdline: data => {
-                    const line = data.toString()
-                    const result = line.match(
-                        /(?<result>Passed|Failed|Skipped)$/
-                    )?.groups?.result
-                    const hookId = line.match(/(- hook id: )(?<hookid>.+)/)
-                        ?.groups?.hookid
-                    const duration = line.match(/(- duration: )(?<duration>.+)/)
-                        ?.groups?.duration
-                    const exitCode = line.match(
-                        /(- exit code: )(?<exitcode>.+)/
-                    )?.groups?.exitcode
-                    const skipLine = line.match(
-                        /\d+ (files left unchanged)/
-                    )?.length
+    returnCode = await exec.exec('pre-commit', preCommitArgs, {
+        failOnStdErr: false,
+        ignoreReturnCode: true,
+        listeners: {
+            stdline: data => {
+                const line = data.toString()
+                const result = line.match(/(?<result>Passed|Failed|Skipped)$/)
+                    ?.groups?.result
+                const hookId = line.match(/(- hook id: )(?<hookid>.+)/)?.groups
+                    ?.hookid
+                const duration = line.match(/(- duration: )(?<duration>.+)/)
+                    ?.groups?.duration
+                const exitCode = line.match(/(- exit code: )(?<exitcode>.+)/)
+                    ?.groups?.exitcode
+                const skipLine = line.match(
+                    /\d+ (files left unchanged)/
+                )?.length
 
-                    if (result) {
-                        lastResult = result
-                    } else if (hookId) {
-                        resultData[hookId] = {
-                            duration: '',
-                            icon:
-                                lastResult === 'Passed'
-                                    ? '✅'
-                                    : lastResult === 'Failed'
-                                      ? '❌'
-                                      : '⚠️',
-                            result: lastResult,
-                            exitCode: '0',
-                            error: ''
-                        }
-                        lastHookId = hookId
-                    } else if (duration) {
-                        resultData[lastHookId].duration = duration
-                    } else if (exitCode) {
-                        resultData[lastHookId].exitCode = exitCode
-                    } else if (
-                        line &&
-                        !skipLine &&
-                        resultData[lastHookId].exitCode
-                    ) {
-                        resultData[lastHookId].error += `${line}\n`
+                if (result) {
+                    lastResult = result
+                } else if (hookId) {
+                    resultData[hookId] = {
+                        duration: '',
+                        icon:
+                            lastResult === 'Passed'
+                                ? '✅'
+                                : lastResult === 'Failed'
+                                  ? '❌'
+                                  : '⚠️',
+                        result: lastResult,
+                        exitCode: '0',
+                        error: ''
                     }
+                    lastHookId = hookId
+                } else if (duration) {
+                    resultData[lastHookId].duration = duration
+                } else if (exitCode) {
+                    resultData[lastHookId].exitCode = exitCode
+                } else if (
+                    line &&
+                    !skipLine &&
+                    resultData[lastHookId].exitCode
+                ) {
+                    resultData[lastHookId].error += `${line}\n`
                 }
             }
-        })
-    } catch (err) {
-        /* istanbul ignore next */
-        console.debug(err)
-    }
+        }
+    })
 
     let commentBody = '## pre-commit results\n\n| Hook ID | Duration | Result |'
 
@@ -189,13 +171,13 @@ export async function run(): Promise<void> {
         commentBody += `| ${key} | ${value.duration} | ${value.icon} ${value.result} |`
         commentBody += returnCode === 0 ? '\n' : ` ${value.exitCode} |\n`
         if (value.error) {
-            errorData[key] = value.error
+            detailsData[key] = value.error
         }
     }
 
-    if (Object.keys(errorData).length) {
-        commentBody += '\n### Failures\n'
-        for (const [key, value] of Object.entries(errorData)) {
+    if (Object.keys(detailsData).length) {
+        commentBody += '\n### Details\n'
+        for (const [key, value] of Object.entries(detailsData)) {
             commentBody += `\n<details>\n<summary>${key}</summary>\n\n\`\`\`\n${value}\`\`\`\n</details>\n`
         }
     }
@@ -205,7 +187,7 @@ export async function run(): Promise<void> {
         JSON.stringify({
             returnCode,
             resultData,
-            errorData
+            detailsData
         })
     )
 
