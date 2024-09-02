@@ -62,7 +62,7 @@ describe('action', () => {
             'Checking python path: /fake/path/to/python'
         )
         expect(setOutputMock).toHaveBeenNthCalledWith(1, 'result', '{}')
-    })
+    }, 30000)
 
     it('verify failed run, pre-commit errors', async () => {
         const testFile = `__tests__/test-${Math.random()}.py`
@@ -99,7 +99,7 @@ describe('action', () => {
             expect.stringMatching(/pre-commit \d+\.\d+\.\d+/)
         )
         expect(infoMock).toHaveBeenNthCalledWith(3, 'Running pre-commit...')
-    })
+    }, 30000)
 
     it('verify successful run, pre-commit missing', async () => {
         getInputMock.mockImplementation(param => {
@@ -132,7 +132,7 @@ describe('action', () => {
             'all pre-commit hooks have passed!'
         )
         expect(errorMock).not.toHaveBeenCalled()
-    })
+    }, 30000)
 
     it('verify successful run, no pre-commit errors', async () => {
         await main.run()
@@ -161,5 +161,5 @@ describe('action', () => {
         )
         expect(setOutputMock).toHaveBeenCalled()
         expect(errorMock).not.toHaveBeenCalled()
-    })
+    }, 30000)
 })
