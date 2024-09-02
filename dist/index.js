@@ -30520,11 +30520,13 @@ async function run() {
     else {
         core.info(`pre-commit version: ${preCommitVersion}`);
     }
+    const context = github.context;
     const baseUrl = core.getInput('base-url') || 'https://api.github.com';
     const token = core.getInput('github-token') || process.env.GITHUB_TOKEN || '';
-    const issueNumber = parseInt(core.getInput('issue-number')) || github.context.issue.number || 1;
+    const issueNumber = parseInt(core.getInput('issue-number')) ||
+        context.payload?.pull_request?.number ||
+        1;
     const debug = core.getBooleanInput('debug') || core.isDebug();
-    const context = github.context;
     const options = {
         baseUrl,
         log: debug ? console : undefined
@@ -30546,10 +30548,14 @@ async function run() {
         listeners: {
             stdline: data => {
                 const line = data.toString();
-                const result = line.match(/(?<result>Passed|Failed|Skipped)$/)?.groups?.result;
-                const hookId = line.match(/(- hook id: )(?<hookid>.+)/)?.groups?.hookid;
-                const duration = line.match(/(- duration: )(?<duration>.+)/)?.groups?.duration;
-                const exitCode = line.match(/(- exit code: )(?<exitcode>.+)/)?.groups?.exitcode;
+                const result = line.match(/(?<result>Passed|Failed|Skipped)$/)
+                    ?.groups?.result;
+                const hookId = line.match(/(- hook id: )(?<hookid>.+)/)?.groups
+                    ?.hookid;
+                const duration = line.match(/(- duration: )(?<duration>.+)/)
+                    ?.groups?.duration;
+                const exitCode = line.match(/(- exit code: )(?<exitcode>.+)/)
+                    ?.groups?.exitcode;
                 const skipLine = line.match(/\d+ (files left unchanged)/)?.length;
                 if (result) {
                     lastResult = result;
@@ -30557,7 +30563,11 @@ async function run() {
                 else if (hookId) {
                     resultData[hookId] = {
                         duration: '',
-                        icon: lastResult === 'Passed' ? '✅' : lastResult === 'Failed' ? '❌' : '⚠️',
+                        icon: lastResult === 'Passed'
+                            ? '✅'
+                            : lastResult === 'Failed'
+                                ? '❌'
+                                : '⚠️',
                         result: lastResult,
                         exitCode: '0',
                         error: ''
@@ -30570,7 +30580,9 @@ async function run() {
                 else if (exitCode) {
                     resultData[lastHookId].exitCode = exitCode;
                 }
-                else if (line && !skipLine && resultData[lastHookId].exitCode) {
+                else if (line &&
+                    !skipLine &&
+                    resultData[lastHookId].exitCode) {
                     resultData[lastHookId].error += `${line}\n`;
                 }
             }
