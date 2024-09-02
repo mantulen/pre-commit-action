@@ -10,6 +10,7 @@ on:
 
 permissions:
     contents: read
+    pull-requests: write
 
 jobs:
     test-typescript:
@@ -56,6 +57,8 @@ jobs:
             - name: Test Local Action
               id: test-action
               uses: ./
+              with:
+                  debug: true
 
             - name: Print Output
               id: output
