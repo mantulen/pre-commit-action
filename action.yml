@@ -26,6 +26,16 @@ inputs:
             ID of the issue or pull request to comment on. Default is the number of the pull request that triggered the
             action.
 
+    skip-comment:
+        required: false
+        default: 'false'
+        description: Whether to skip commenting on the pull request. true or false. Default is false.
+
+    skip-job-summary:
+        required: false
+        default: 'false'
+        description: Whether to skip printing the job summary. true or false. Default is false.
+
     debug:
         required: false
         default: ${{ runner.debug == '1' }}

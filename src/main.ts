@@ -89,6 +89,9 @@ export async function run(): Promise<void> {
 
     const debug = core.getBooleanInput('debug') || core.isDebug()
 
+    const skipComment = core.getBooleanInput('skip-comment') || false
+    const skipJobSummary = core.getBooleanInput('skip-job-summary') || false
+
     const options: OctokitOptions = {
         baseUrl,
         log: debug ? console : undefined
@@ -185,19 +188,21 @@ export async function run(): Promise<void> {
             detailsData
         })
     )
-
+    /* istanbul ignore next */
     if (!issueNumber) {
-        /* istanbul ignore next */
         core.warning(
             'No PR/issue number found, will not be creating a comment. You can pass the PR/issue number using the `issue-number` input.'
         )
-    } else {
-        /* istanbul ignore next */
+    } else if (!skipComment) {
         await octokit.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issueNumber,
             body: commentBody
         })
+    }
+
+    if (!skipJobSummary) {
+        core.summary.addRaw(commentBody)
     }
 }
