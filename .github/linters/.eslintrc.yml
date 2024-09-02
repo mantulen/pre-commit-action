@@ -9,9 +9,10 @@ globals:
 
 ignorePatterns:
     - '!.*'
-    - '**/node_modules/.*'
-    - '**/dist/.*'
-    - '**/coverage/.*'
+    - '**/node_modules'
+    - '**/dist'
+    - '**/coverage'
+    - '**/docs'
     - '*.json'
 
 parser: '@typescript-eslint/parser'
