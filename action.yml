@@ -11,8 +11,7 @@ inputs:
         required: false
         default: https://api.github.com
         description:
-            An optional GitHub REST API URL to connect to a different GitHub
-            instance. For example,
+            An optional GitHub REST API URL to connect to a different GitHub instance. For example,
             https://my.github-enterprise-server.com/api/v3
 
     github-token:
@@ -24,16 +23,15 @@ inputs:
         required: false
         default: ${{ github.event.number }}
         description:
-            ID of the issue or pull request to comment on. Default is the number
-            of the pull request that triggered the action.
+            ID of the issue or pull request to comment on. Default is the number of the pull request that triggered the
+            action.
 
     debug:
         required: false
         default: ${{ runner.debug == '1' }}
         description:
-            Whether to tell the GitHub client to log details of its requests.
-            true or false. Default is to run in debug mode when the GitHub
-            Actions step debug logging is turned on.
+            Whether to tell the GitHub client to log details of its requests. true or false. Default is to run in debug
+            mode when the GitHub Actions step debug logging is turned on.
 
     python-path:
         required: false

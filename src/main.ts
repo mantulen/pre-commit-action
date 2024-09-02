@@ -83,12 +83,9 @@ export async function run(): Promise<void> {
     const context = github.context
     const baseUrl = core.getInput('base-url') || 'https://api.github.com'
 
-    const token =
-        core.getInput('github-token') || process.env.GITHUB_TOKEN || ''
+    const token = core.getInput('github-token') || process.env.GITHUB_TOKEN || ''
 
-    const issueNumber =
-        parseInt(core.getInput('issue-number')) ||
-        context.payload?.pull_request?.number
+    const issueNumber = parseInt(core.getInput('issue-number')) || context.payload?.pull_request?.number
 
     const debug = core.getBooleanInput('debug') || core.isDebug()
 
@@ -121,31 +118,18 @@ export async function run(): Promise<void> {
             listeners: {
                 stdline: data => {
                     const line = data.toString()
-                    const result = line.match(
-                        /(?<result>Passed|Failed|Skipped)$/
-                    )?.groups?.result
-                    const hookId = line.match(/(- hook id: )(?<hookid>.+)/)
-                        ?.groups?.hookid
-                    const duration = line.match(/(- duration: )(?<duration>.+)/)
-                        ?.groups?.duration
-                    const exitCode = line.match(
-                        /(- exit code: )(?<exitcode>.+)/
-                    )?.groups?.exitcode
-                    const skipLine = line.match(
-                        /\d+ (files left unchanged)/
-                    )?.length
+                    const result = line.match(/(?<result>Passed|Failed|Skipped)$/)?.groups?.result
+                    const hookId = line.match(/(- hook id: )(?<hookid>.+)/)?.groups?.hookid
+                    const duration = line.match(/(- duration: )(?<duration>.+)/)?.groups?.duration
+                    const exitCode = line.match(/(- exit code: )(?<exitcode>.+)/)?.groups?.exitcode
+                    const skipLine = line.match(/\d+ (files left unchanged)/)?.length
 
                     if (result) {
                         lastResult = result
                     } else if (hookId) {
                         resultData[hookId] = {
                             duration: '',
-                            icon:
-                                lastResult === 'Passed'
-                                    ? '✅'
-                                    : lastResult === 'Failed'
-                                      ? '❌'
-                                      : '⚠️',
+                            icon: lastResult === 'Passed' ? '✅' : lastResult === 'Failed' ? '❌' : '⚠️',
                             result: lastResult,
                             exitCode: '0',
                             error: ''
@@ -155,11 +139,7 @@ export async function run(): Promise<void> {
                         resultData[lastHookId].duration = duration
                     } else if (exitCode) {
                         resultData[lastHookId].exitCode = exitCode
-                    } else if (
-                        line &&
-                        !skipLine &&
-                        resultData[lastHookId].exitCode
-                    ) {
+                    } else if (line && !skipLine && resultData[lastHookId].exitCode) {
                         resultData[lastHookId].error += `${line}\n`
                     }
                 }
