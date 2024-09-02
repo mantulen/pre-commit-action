@@ -100,6 +100,7 @@ export async function run(): Promise<void> {
 
     let lastHookId: string
     let lastResult: string
+    let returnCode = 0
 
     core.info('Running pre-commit...')
 
@@ -109,54 +110,61 @@ export async function run(): Promise<void> {
         ? preCommitArgsInput.split(' ')
         : ['run', '--color', 'never', '--all-files', '--verbose']
 
-    const returnCode = await exec.exec('pre-commit', preCommitArgs, {
-        failOnStdErr: false,
-        ignoreReturnCode: true,
-        listeners: {
-            stdline: data => {
-                const line = data.toString()
-                const result = line.match(/(?<result>Passed|Failed|Skipped)$/)
-                    ?.groups?.result
-                const hookId = line.match(/(- hook id: )(?<hookid>.+)/)?.groups
-                    ?.hookid
-                const duration = line.match(/(- duration: )(?<duration>.+)/)
-                    ?.groups?.duration
-                const exitCode = line.match(/(- exit code: )(?<exitcode>.+)/)
-                    ?.groups?.exitcode
-                const skipLine = line.match(
-                    /\d+ (files left unchanged)/
-                )?.length
+    try {
+        returnCode = await exec.exec('pre-commit', preCommitArgs, {
+            failOnStdErr: false,
+            ignoreReturnCode: true,
+            listeners: {
+                stdline: data => {
+                    const line = data.toString()
+                    const result = line.match(
+                        /(?<result>Passed|Failed|Skipped)$/
+                    )?.groups?.result
+                    const hookId = line.match(/(- hook id: )(?<hookid>.+)/)
+                        ?.groups?.hookid
+                    const duration = line.match(/(- duration: )(?<duration>.+)/)
+                        ?.groups?.duration
+                    const exitCode = line.match(
+                        /(- exit code: )(?<exitcode>.+)/
+                    )?.groups?.exitcode
+                    const skipLine = line.match(
+                        /\d+ (files left unchanged)/
+                    )?.length
 
-                if (result) {
-                    lastResult = result
-                } else if (hookId) {
-                    resultData[hookId] = {
-                        duration: '',
-                        icon:
-                            lastResult === 'Passed'
-                                ? '✅'
-                                : lastResult === 'Failed'
-                                  ? '❌'
-                                  : '⚠️',
-                        result: lastResult,
-                        exitCode: '0',
-                        error: ''
+                    if (result) {
+                        lastResult = result
+                    } else if (hookId) {
+                        resultData[hookId] = {
+                            duration: '',
+                            icon:
+                                lastResult === 'Passed'
+                                    ? '✅'
+                                    : lastResult === 'Failed'
+                                      ? '❌'
+                                      : '⚠️',
+                            result: lastResult,
+                            exitCode: '0',
+                            error: ''
+                        }
+                        lastHookId = hookId
+                    } else if (duration) {
+                        resultData[lastHookId].duration = duration
+                    } else if (exitCode) {
+                        resultData[lastHookId].exitCode = exitCode
+                    } else if (
+                        line &&
+                        !skipLine &&
+                        resultData[lastHookId].exitCode
+                    ) {
+                        resultData[lastHookId].error += `${line}\n`
                     }
-                    lastHookId = hookId
-                } else if (duration) {
-                    resultData[lastHookId].duration = duration
-                } else if (exitCode) {
-                    resultData[lastHookId].exitCode = exitCode
-                } else if (
-                    line &&
-                    !skipLine &&
-                    resultData[lastHookId].exitCode
-                ) {
-                    resultData[lastHookId].error += `${line}\n`
                 }
             }
-        }
-    })
+        })
+    } catch (err) {
+        /* istanbul ignore next */
+        console.debug(err)
+    }
 
     let commentBody = '## pre-commit results\n\n| Hook ID | Duration | Result |'
 
