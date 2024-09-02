@@ -84,12 +84,14 @@ export async function run(): Promise<void> {
 
     const context = github.context
     const baseUrl = core.getInput('base-url') || 'https://api.github.com'
+
     const token =
         core.getInput('github-token') || process.env.GITHUB_TOKEN || ''
+
     const issueNumber =
         parseInt(core.getInput('issue-number')) ||
-        context.payload?.pull_request?.number ||
-        1
+        context.payload?.pull_request?.number
+
     const debug = core.getBooleanInput('debug') || core.isDebug()
 
     const options: OctokitOptions = {
@@ -213,6 +215,7 @@ export async function run(): Promise<void> {
             'No PR/issue number found, will not be creating a comment. You can pass the PR/issue number using the `issue-number` input.'
         )
     } else {
+        /* istanbul ignore next */
         await octokit.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
