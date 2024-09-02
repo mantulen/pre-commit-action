@@ -30530,7 +30530,7 @@ async function run() {
     const token = core.getInput('github-token') || process.env.GITHUB_TOKEN || '';
     const issueNumber = parseInt(core.getInput('issue-number')) || context.payload?.pull_request?.number;
     const debug = core.getBooleanInput('debug') || core.isDebug();
-    const skipComment = core.getBooleanInput('skip-comment') || false;
+    const skipComment = core.getBooleanInput('skip-comment') || process.env.INPUT_SKIP_COMMENT || false;
     const skipJobSummary = core.getBooleanInput('skip-job-summary') || false;
     const options = {
         baseUrl,
