@@ -46,6 +46,7 @@ jobs:
               run: npm run ci-test
               env:
                   GITHUB_TOKEN: ${{ github.token }}
+                  INPUT_SKIP_COMMENT: true
 
     test-action:
         name: GitHub Actions Test
