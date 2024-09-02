@@ -3,8 +3,8 @@ description: Pre-commit action
 author: mantulen
 
 branding:
-    icon: check-circle
-    color: green
+    icon: check-square
+    color: blue
 
 inputs:
     base-url:
