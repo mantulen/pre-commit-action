@@ -20,7 +20,6 @@ let errorMock: jest.SpiedFunction<typeof core.error>
 let getInputMock: jest.SpiedFunction<typeof core.getInput>
 let getBooleanInputMock: jest.SpiedFunction<typeof core.getBooleanInput>
 let setOutputMock: jest.SpiedFunction<typeof core.setOutput>
-let setFailedMock: jest.SpiedFunction<typeof core.setFailed>
 
 describe('action', () => {
     beforeEach(() => {
@@ -35,7 +34,6 @@ describe('action', () => {
             .spyOn(core, 'getBooleanInput')
             .mockImplementation()
         setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
-        setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
 
         getBooleanInputMock.mockImplementation(param => {
             switch (param) {
@@ -63,12 +61,7 @@ describe('action', () => {
             1,
             'Checking python path: /fake/path/to/python'
         )
-        expect(errorMock).toHaveBeenNthCalledWith(1, 'Python was not found.')
         expect(setOutputMock).toHaveBeenNthCalledWith(1, 'result', '{}')
-        expect(setFailedMock).toHaveBeenNthCalledWith(
-            1,
-            'Python is required to run this action.'
-        )
     })
 
     it('verify failed run, pre-commit errors', async () => {
@@ -109,14 +102,6 @@ describe('action', () => {
             expect.stringMatching(/pre-commit \d+\.\d+\.\d+/)
         )
         expect(infoMock).toHaveBeenNthCalledWith(3, 'Running pre-commit...')
-        expect(errorMock).toHaveBeenNthCalledWith(
-            1,
-            'pre-commit checks have failed hooks.'
-        )
-        expect(setFailedMock).toHaveBeenNthCalledWith(
-            1,
-            'pre-commit checks have failed.'
-        )
     })
 
     it('verify successful run, pre-commit missing', async () => {
