@@ -76,7 +76,7 @@ export async function run(): Promise<void> {
     }
 
     const baseUrl = core.getInput('base-url') || 'https://api.github.com'
-    const token = core.getInput('github-token') || process.env.GITHUB_TOKEN || github.context. || ''
+    const token = core.getInput('github-token') || process.env.GITHUB_TOKEN || ''
     const issueNumber = parseInt(core.getInput('issue-number')) || github.context.issue.number || 1
     const debug = core.getBooleanInput('debug') || core.isDebug()
 
