@@ -102,4 +102,4 @@ __tests__/runner/*
 .vscode
 *.code-workspace
 
-__tests__/test.py
+__tests__/test-*.py
