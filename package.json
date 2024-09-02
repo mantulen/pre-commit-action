@@ -57,6 +57,7 @@
         },
         "coverageReporters": [
             "text",
+            "json-summary",
             "html-spa"
         ],
         "collectCoverage": true,

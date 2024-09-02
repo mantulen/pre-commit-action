@@ -30631,8 +30631,9 @@ async function run() {
             body: commentBody
         });
     }
-    if (!skipJobSummary) {
-        core.summary.addRaw(commentBody);
+    /* istanbul ignore next */
+    if (!skipJobSummary && !isJest) {
+        await core.summary.addRaw(commentBody, true).write();
     }
 }
 
