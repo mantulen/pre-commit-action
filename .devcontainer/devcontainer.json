@@ -1,7 +1,7 @@
 {
     "name": "pre-commit-action",
-    "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
-    "postCreateCommand": "npm install",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+    "postCreateCommand": "npm install && pip install pre-commit && pre-commit install",
     "customizations": {
         "codespaces": {
             "openFiles": ["README.md"]
@@ -35,7 +35,9 @@
         "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}"
     },
     "features": {
-        "ghcr.io/devcontainers/features/github-cli:1": {},
-        "ghcr.io/devcontainers-contrib/features/prettier:1": {}
+        "ghcr.io/devcontainers/features/node:1": {},
+        "ghcr.io/devcontainers/features/python:1": {
+            "installTools": false
+        }
     }
 }
