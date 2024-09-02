@@ -65,25 +65,22 @@ describe('action', () => {
     })
 
     it('verify failed run, pre-commit errors', async () => {
+        const testFile = `__tests__/test-${Math.random()}.py`
         getInputMock.mockImplementation(param => {
             switch (param) {
                 case 'pre-commit-args':
-                    return 'run --config __tests__/.pre-commit-config-test.yaml --files __tests__/test.py --verbose'
+                    return `run --config __tests__/.pre-commit-config-test.yaml --files ${testFile} --verbose`
                 default:
                     return ''
             }
         })
 
-        fs.writeFile('__tests__/test.py', '{', err => {
-            if (err) throw err
-        })
+        fs.writeFileSync(testFile, '{')
 
         await main.run()
         expect(runMock).toHaveReturned()
 
-        fs.unlink('__tests__/test.py', err => {
-            if (err) throw err
-        })
+        fs.unlinkSync(testFile)
 
         expect(debugMock).toHaveBeenNthCalledWith(
             1,
