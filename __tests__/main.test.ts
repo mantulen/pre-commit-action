@@ -75,7 +75,7 @@ describe('action', () => {
             }
         })
 
-        fs.writeFileSync(testFile, '{')
+        fs.writeFileSync(testFile, 'import fake_module\n')
 
         await main.run()
         expect(runMock).toHaveReturned()
