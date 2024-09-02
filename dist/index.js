@@ -30539,7 +30539,7 @@ async function run() {
     };
     const octokit = github.getOctokit(token, options);
     const resultData = {};
-    const errorData = {};
+    const detailsData = {};
     let lastHookId;
     let lastResult;
     let returnCode = 0;
@@ -30615,19 +30615,19 @@ async function run() {
         commentBody += `| ${key} | ${value.duration} | ${value.icon} ${value.result} |`;
         commentBody += returnCode === 0 ? '\n' : ` ${value.exitCode} |\n`;
         if (value.error) {
-            errorData[key] = value.error;
+            detailsData[key] = value.error;
         }
     }
-    if (Object.keys(errorData).length) {
-        commentBody += '\n### Failures\n';
-        for (const [key, value] of Object.entries(errorData)) {
+    if (Object.keys(detailsData).length) {
+        commentBody += '\n### Details\n';
+        for (const [key, value] of Object.entries(detailsData)) {
             commentBody += `\n<details>\n<summary>${key}</summary>\n\n\`\`\`\n${value}\`\`\`\n</details>\n`;
         }
     }
     core.setOutput('result', JSON.stringify({
         returnCode,
         resultData,
-        errorData
+        detailsData
     }));
     if (!issueNumber) {
         /* istanbul ignore next */
