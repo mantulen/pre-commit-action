@@ -202,7 +202,8 @@ export async function run(): Promise<void> {
         })
     }
 
-    if (!skipJobSummary) {
-        core.summary.addRaw(commentBody, true)
+    /* istanbul ignore next */
+    if (!skipJobSummary && !isJest) {
+        await core.summary.addRaw(commentBody, true).write()
     }
 }
