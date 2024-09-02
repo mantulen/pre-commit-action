@@ -1,5 +1,5 @@
-name: pre-commit-action
-description: Pre-commit action
+name: pre-commit action with PR comment and job summary of results
+description: Runs pre-commit, creates a job summary, and adds a comment to the pull request with the results
 author: mantulen
 
 branding:
