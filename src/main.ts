@@ -32,15 +32,19 @@ export async function run(): Promise<void> {
 
     // Check if Python is installed and get the version
     core.debug(`Checking python path: ${pythonPath}`)
-    await exec.exec(pythonPath, ['--version'], {
-        failOnStdErr: false,
-        ignoreReturnCode: true,
-        listeners: {
-            stdout: (data: Buffer) => {
-                pythonVersion = data.toString()
+    try {
+        await exec.exec(pythonPath, ['--version'], {
+            failOnStdErr: false,
+            ignoreReturnCode: true,
+            listeners: {
+                stdout: (data: Buffer) => {
+                    pythonVersion = data.toString()
+                }
             }
-        }
-    })
+        })
+    } catch (err) {
+        console.error(err)
+    }
 
     // If Python is not installed, the action will fail
     if (!pythonVersion) {
@@ -54,15 +58,19 @@ export async function run(): Promise<void> {
 
     // Check if pre-commit is installed and get the version
     core.debug(`Checking pre-commit path: ${preCommitPath}`)
-    await exec.exec(preCommitPath, ['--version'], {
-        failOnStdErr: false,
-        ignoreReturnCode: true,
-        listeners: {
-            stdout: (data: Buffer) => {
-                preCommitVersion = data.toString()
+    try {
+        await exec.exec(preCommitPath, ['--version'], {
+            failOnStdErr: false,
+            ignoreReturnCode: true,
+            listeners: {
+                stdout: (data: Buffer) => {
+                    preCommitVersion = data.toString()
+                }
             }
-        }
-    })
+        })
+    } catch (err) {
+        console.debug(`pre-commit not found: ${preCommitPath}`)
+    }
 
     // If pre-commit is not installed, install it
     if (!preCommitVersion) {
@@ -106,54 +114,61 @@ export async function run(): Promise<void> {
         ? preCommitArgsInput.split(' ')
         : ['run', '--color', 'never', '--all-files', '--verbose']
 
-    returnCode = await exec.exec('pre-commit', preCommitArgs, {
-        failOnStdErr: false,
-        ignoreReturnCode: true,
-        listeners: {
-            stdline: data => {
-                const line = data.toString()
-                const result = line.match(/(?<result>Passed|Failed|Skipped)$/)
-                    ?.groups?.result
-                const hookId = line.match(/(- hook id: )(?<hookid>.+)/)?.groups
-                    ?.hookid
-                const duration = line.match(/(- duration: )(?<duration>.+)/)
-                    ?.groups?.duration
-                const exitCode = line.match(/(- exit code: )(?<exitcode>.+)/)
-                    ?.groups?.exitcode
-                const skipLine = line.match(
-                    /\d+ (files left unchanged)/
-                )?.length
+    try {
+        returnCode = await exec.exec('pre-commit', preCommitArgs, {
+            failOnStdErr: false,
+            ignoreReturnCode: true,
+            listeners: {
+                stdline: data => {
+                    const line = data.toString()
+                    const result = line.match(
+                        /(?<result>Passed|Failed|Skipped)$/
+                    )?.groups?.result
+                    const hookId = line.match(/(- hook id: )(?<hookid>.+)/)
+                        ?.groups?.hookid
+                    const duration = line.match(/(- duration: )(?<duration>.+)/)
+                        ?.groups?.duration
+                    const exitCode = line.match(
+                        /(- exit code: )(?<exitcode>.+)/
+                    )?.groups?.exitcode
+                    const skipLine = line.match(
+                        /\d+ (files left unchanged)/
+                    )?.length
 
-                if (result) {
-                    lastResult = result
-                } else if (hookId) {
-                    resultData[hookId] = {
-                        duration: '',
-                        icon:
-                            lastResult === 'Passed'
-                                ? '✅'
-                                : lastResult === 'Failed'
-                                  ? '❌'
-                                  : '⚠️',
-                        result: lastResult,
-                        exitCode: '0',
-                        error: ''
+                    if (result) {
+                        lastResult = result
+                    } else if (hookId) {
+                        resultData[hookId] = {
+                            duration: '',
+                            icon:
+                                lastResult === 'Passed'
+                                    ? '✅'
+                                    : lastResult === 'Failed'
+                                      ? '❌'
+                                      : '⚠️',
+                            result: lastResult,
+                            exitCode: '0',
+                            error: ''
+                        }
+                        lastHookId = hookId
+                    } else if (duration) {
+                        resultData[lastHookId].duration = duration
+                    } else if (exitCode) {
+                        resultData[lastHookId].exitCode = exitCode
+                    } else if (
+                        line &&
+                        !skipLine &&
+                        resultData[lastHookId].exitCode
+                    ) {
+                        resultData[lastHookId].error += `${line}\n`
                     }
-                    lastHookId = hookId
-                } else if (duration) {
-                    resultData[lastHookId].duration = duration
-                } else if (exitCode) {
-                    resultData[lastHookId].exitCode = exitCode
-                } else if (
-                    line &&
-                    !skipLine &&
-                    resultData[lastHookId].exitCode
-                ) {
-                    resultData[lastHookId].error += `${line}\n`
                 }
             }
-        }
-    })
+        })
+    } catch (err) {
+        /* istanbul ignore next */
+        console.error(err)
+    }
 
     let commentBody = '## pre-commit results\n\n| Hook ID | Duration | Result |'
 
