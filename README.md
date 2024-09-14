@@ -10,8 +10,6 @@
 This action runs pre-commit against your code, creates a job summary, and adds a comment on your pull request with the
 results of the run.
 
-⚠️ **This action is under active development, and is yet to be released to the marketplace.**
-
 ## Screenshot
 
 ![image](https://github.com/user-attachments/assets/3669617e-e667-489c-bd07-a1930a87bd95)
@@ -67,7 +65,7 @@ jobs:
 
             - name: Run pre-commit checks
               id: run-pre-commit
-              uses: mantulen/pre-commit-action@main
+              uses: mantulen/pre-commit-action@v0.0.2
 
             - name: Print Output
               id: output

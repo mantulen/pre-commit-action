@@ -1,7 +1,7 @@
 {
     "name": "pre-commit-action",
     "description": "GitHub Action that runs pre-commit, creates a job summary, and adds a comment to the pull request with the results",
-    "version": "0.0.0",
+    "version": "v0.0.2",
     "author": "",
     "private": true,
     "homepage": "https://github.com/mantulen/pre-commit-action",
