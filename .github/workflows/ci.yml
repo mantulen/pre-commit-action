@@ -48,6 +48,11 @@ jobs:
                   GITHUB_TOKEN: ${{ github.token }}
                   INPUT_SKIP_COMMENT: true
 
+            - name: Upload results to Codecov
+              uses: codecov/codecov-action@v4
+              with:
+                   token: ${{ secrets.CODECOV_TOKEN }}
+
     test-action:
         name: GitHub Actions Test
         runs-on: ubuntu-latest
