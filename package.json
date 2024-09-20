@@ -58,7 +58,8 @@
         "coverageReporters": [
             "text",
             "json-summary",
-            "html-spa"
+            "html-spa",
+            "cobertura"
         ],
         "collectCoverage": true,
         "collectCoverageFrom": [
