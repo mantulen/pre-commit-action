@@ -6,6 +6,7 @@
 [![Check dist/](https://github.com/mantulen/pre-commit-action/actions/workflows/check-dist.yml/badge.svg)](https://github.com/mantulen/pre-commit-action/actions/workflows/check-dist.yml)
 [![CodeQL](https://github.com/mantulen/pre-commit-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/mantulen/pre-commit-action/actions/workflows/codeql-analysis.yml)
 [![Coverage](./badges/coverage.svg)](https://mantulen.github.io/pre-commit-action/)
+[![codecov](https://codecov.io/github/mantulen/pre-commit-action/graph/badge.svg?token=C47JRSIXJV)](https://codecov.io/github/mantulen/pre-commit-action)
 
 This action runs pre-commit against your code, creates a job summary, and adds a comment on your pull request with the
 results of the run.
